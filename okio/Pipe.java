@@ -1,0 +1,217 @@
+package okio;
+
+import com.alibaba.fastjson.parser.deserializer.C0534b;
+import java.io.IOException;
+import javax.annotation.Nullable;
+
+/* loaded from: classes.dex */
+public final class Pipe {
+
+    @Nullable
+    private Sink foldedSink;
+    public final long maxBufferSize;
+    public boolean sinkClosed;
+    public boolean sourceClosed;
+    public final Buffer buffer = new Buffer();
+    private final Sink sink = new PipeSink();
+    private final Source source = new PipeSource();
+
+    public final class PipeSink implements Sink {
+        public final PushableTimeout timeout = new PushableTimeout();
+
+        public PipeSink() {
+        }
+
+        @Override // okio.Sink, java.io.Closeable, java.lang.AutoCloseable
+        public void close() {
+            Sink sink;
+            synchronized (Pipe.this.buffer) {
+                Pipe pipe = Pipe.this;
+                if (pipe.sinkClosed) {
+                    return;
+                }
+                if (pipe.foldedSink != null) {
+                    sink = Pipe.this.foldedSink;
+                } else {
+                    Pipe pipe2 = Pipe.this;
+                    if (pipe2.sourceClosed && pipe2.buffer.size() > 0) {
+                        throw new IOException("source is closed");
+                    }
+                    Pipe pipe3 = Pipe.this;
+                    pipe3.sinkClosed = true;
+                    pipe3.buffer.notifyAll();
+                    sink = null;
+                }
+                if (sink != null) {
+                    this.timeout.push(sink.timeout());
+                    try {
+                        sink.close();
+                    } finally {
+                        this.timeout.pop();
+                    }
+                }
+            }
+        }
+
+        @Override // okio.Sink, java.io.Flushable
+        public void flush() {
+            Sink sink;
+            synchronized (Pipe.this.buffer) {
+                Pipe pipe = Pipe.this;
+                if (pipe.sinkClosed) {
+                    throw new IllegalStateException("closed");
+                }
+                if (pipe.foldedSink != null) {
+                    sink = Pipe.this.foldedSink;
+                } else {
+                    Pipe pipe2 = Pipe.this;
+                    if (pipe2.sourceClosed && pipe2.buffer.size() > 0) {
+                        throw new IOException("source is closed");
+                    }
+                    sink = null;
+                }
+            }
+            if (sink != null) {
+                this.timeout.push(sink.timeout());
+                try {
+                    sink.flush();
+                } finally {
+                    this.timeout.pop();
+                }
+            }
+        }
+
+        @Override // okio.Sink
+        public Timeout timeout() {
+            return this.timeout;
+        }
+
+        @Override // okio.Sink
+        public void write(Buffer buffer, long j7) {
+            Sink sink;
+            synchronized (Pipe.this.buffer) {
+                if (!Pipe.this.sinkClosed) {
+                    while (true) {
+                        if (j7 <= 0) {
+                            sink = null;
+                            break;
+                        }
+                        if (Pipe.this.foldedSink != null) {
+                            sink = Pipe.this.foldedSink;
+                            break;
+                        }
+                        Pipe pipe = Pipe.this;
+                        if (pipe.sourceClosed) {
+                            throw new IOException("source is closed");
+                        }
+                        long size = pipe.maxBufferSize - pipe.buffer.size();
+                        if (size == 0) {
+                            this.timeout.waitUntilNotified(Pipe.this.buffer);
+                        } else {
+                            long jMin = Math.min(size, j7);
+                            Pipe.this.buffer.write(buffer, jMin);
+                            j7 -= jMin;
+                            Pipe.this.buffer.notifyAll();
+                        }
+                    }
+                } else {
+                    throw new IllegalStateException("closed");
+                }
+            }
+            if (sink != null) {
+                this.timeout.push(sink.timeout());
+                try {
+                    sink.write(buffer, j7);
+                } finally {
+                    this.timeout.pop();
+                }
+            }
+        }
+    }
+
+    public final class PipeSource implements Source {
+        public final Timeout timeout = new Timeout();
+
+        public PipeSource() {
+        }
+
+        @Override // okio.Source, java.io.Closeable, java.lang.AutoCloseable
+        public void close() {
+            synchronized (Pipe.this.buffer) {
+                Pipe pipe = Pipe.this;
+                pipe.sourceClosed = true;
+                pipe.buffer.notifyAll();
+            }
+        }
+
+        @Override // okio.Source
+        public long read(Buffer buffer, long j7) {
+            synchronized (Pipe.this.buffer) {
+                if (Pipe.this.sourceClosed) {
+                    throw new IllegalStateException("closed");
+                }
+                while (Pipe.this.buffer.size() == 0) {
+                    Pipe pipe = Pipe.this;
+                    if (pipe.sinkClosed) {
+                        return -1L;
+                    }
+                    this.timeout.waitUntilNotified(pipe.buffer);
+                }
+                long j8 = Pipe.this.buffer.read(buffer, j7);
+                Pipe.this.buffer.notifyAll();
+                return j8;
+            }
+        }
+
+        @Override // okio.Source
+        public Timeout timeout() {
+            return this.timeout;
+        }
+    }
+
+    public Pipe(long j7) {
+        if (j7 < 1) {
+            throw new IllegalArgumentException(C0534b.m341a("maxBufferSize < 1: ", j7));
+        }
+        this.maxBufferSize = j7;
+    }
+
+    public void fold(Sink sink) {
+        Buffer buffer;
+        while (true) {
+            synchronized (this.buffer) {
+                if (this.foldedSink != null) {
+                    throw new IllegalStateException("sink already folded");
+                }
+                if (this.buffer.exhausted()) {
+                    this.sourceClosed = true;
+                    this.foldedSink = sink;
+                    return;
+                } else {
+                    buffer = new Buffer();
+                    Buffer buffer2 = this.buffer;
+                    buffer.write(buffer2, buffer2.size);
+                    this.buffer.notifyAll();
+                }
+            }
+            try {
+                sink.write(buffer, buffer.size);
+                sink.flush();
+            } catch (Throwable th) {
+                synchronized (this.buffer) {
+                    this.sourceClosed = true;
+                    this.buffer.notifyAll();
+                    throw th;
+                }
+            }
+        }
+    }
+
+    public final Sink sink() {
+        return this.sink;
+    }
+
+    public final Source source() {
+        return this.source;
+    }
+}

@@ -1,0 +1,18 @@
+package android.support.v4.widget;
+
+import android.support.annotation.NonNull;
+import android.widget.ListView;
+
+/* loaded from: classes.dex */
+public final class ListViewCompat {
+    private ListViewCompat() {
+    }
+
+    public static boolean canScrollList(@NonNull ListView listView, int i7) {
+        return listView.canScrollList(i7);
+    }
+
+    public static void scrollListBy(@NonNull ListView listView, int i7) {
+        listView.scrollListBy(i7);
+    }
+}

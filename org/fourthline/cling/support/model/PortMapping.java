@@ -1,0 +1,152 @@
+package org.fourthline.cling.support.model;
+
+import java.util.Map;
+import org.fourthline.cling.model.action.ActionArgumentValue;
+import org.fourthline.cling.model.meta.Service;
+import org.fourthline.cling.model.types.UnsignedIntegerFourBytes;
+import org.fourthline.cling.model.types.UnsignedIntegerTwoBytes;
+import p009b.C0413b;
+
+/* loaded from: classes.dex */
+public class PortMapping {
+    private String description;
+    private boolean enabled;
+    private UnsignedIntegerTwoBytes externalPort;
+    private String internalClient;
+    private UnsignedIntegerTwoBytes internalPort;
+    private UnsignedIntegerFourBytes leaseDurationSeconds;
+    private Protocol protocol;
+    private String remoteHost;
+
+    public enum Protocol {
+        UDP,
+        TCP
+    }
+
+    public PortMapping() {
+    }
+
+    public String getDescription() {
+        String str = this.description;
+        return str == null ? "-" : str;
+    }
+
+    public UnsignedIntegerTwoBytes getExternalPort() {
+        return this.externalPort;
+    }
+
+    public String getInternalClient() {
+        return this.internalClient;
+    }
+
+    public UnsignedIntegerTwoBytes getInternalPort() {
+        return this.internalPort;
+    }
+
+    public UnsignedIntegerFourBytes getLeaseDurationSeconds() {
+        return this.leaseDurationSeconds;
+    }
+
+    public Protocol getProtocol() {
+        return this.protocol;
+    }
+
+    public String getRemoteHost() {
+        String str = this.remoteHost;
+        return str == null ? "-" : str;
+    }
+
+    public boolean hasDescription() {
+        return this.description != null;
+    }
+
+    public boolean hasRemoteHost() {
+        String str = this.remoteHost;
+        return str != null && str.length() > 0;
+    }
+
+    public boolean isEnabled() {
+        return this.enabled;
+    }
+
+    public void setDescription(String str) {
+        if (str == null || str.equals("-") || str.length() == 0) {
+            str = null;
+        }
+        this.description = str;
+    }
+
+    public void setEnabled(boolean z6) {
+        this.enabled = z6;
+    }
+
+    public void setExternalPort(UnsignedIntegerTwoBytes unsignedIntegerTwoBytes) {
+        this.externalPort = unsignedIntegerTwoBytes;
+    }
+
+    public void setInternalClient(String str) {
+        this.internalClient = str;
+    }
+
+    public void setInternalPort(UnsignedIntegerTwoBytes unsignedIntegerTwoBytes) {
+        this.internalPort = unsignedIntegerTwoBytes;
+    }
+
+    public void setLeaseDurationSeconds(UnsignedIntegerFourBytes unsignedIntegerFourBytes) {
+        this.leaseDurationSeconds = unsignedIntegerFourBytes;
+    }
+
+    public void setProtocol(Protocol protocol) {
+        this.protocol = protocol;
+    }
+
+    public void setRemoteHost(String str) {
+        if (str == null || str.equals("-") || str.length() == 0) {
+            str = null;
+        }
+        this.remoteHost = str;
+    }
+
+    public String toString() {
+        StringBuilder sbM112a = C0413b.m112a("(");
+        sbM112a.append(getClass().getSimpleName());
+        sbM112a.append(") Protocol: ");
+        sbM112a.append(getProtocol());
+        sbM112a.append(", ");
+        sbM112a.append(getExternalPort());
+        sbM112a.append(" => ");
+        sbM112a.append(getInternalClient());
+        return sbM112a.toString();
+    }
+
+    public PortMapping(Map<String, ActionArgumentValue<Service>> map) {
+        this(((Boolean) map.get("NewEnabled").getValue()).booleanValue(), (UnsignedIntegerFourBytes) map.get("NewLeaseDuration").getValue(), (String) map.get("NewRemoteHost").getValue(), (UnsignedIntegerTwoBytes) map.get("NewExternalPort").getValue(), (UnsignedIntegerTwoBytes) map.get("NewInternalPort").getValue(), (String) map.get("NewInternalClient").getValue(), Protocol.valueOf(map.get("NewProtocol").toString()), (String) map.get("NewPortMappingDescription").getValue());
+    }
+
+    /* JADX WARN: Illegal instructions before constructor call */
+    public PortMapping(int i7, String str, Protocol protocol) {
+        long j7 = i7;
+        this(true, new UnsignedIntegerFourBytes(0L), null, new UnsignedIntegerTwoBytes(j7), new UnsignedIntegerTwoBytes(j7), str, protocol, null);
+    }
+
+    /* JADX WARN: Illegal instructions before constructor call */
+    public PortMapping(int i7, String str, Protocol protocol, String str2) {
+        long j7 = i7;
+        this(true, new UnsignedIntegerFourBytes(0L), null, new UnsignedIntegerTwoBytes(j7), new UnsignedIntegerTwoBytes(j7), str, protocol, str2);
+    }
+
+    public PortMapping(String str, UnsignedIntegerTwoBytes unsignedIntegerTwoBytes, Protocol protocol) {
+        this(true, new UnsignedIntegerFourBytes(0L), str, unsignedIntegerTwoBytes, null, null, protocol, null);
+    }
+
+    public PortMapping(boolean z6, UnsignedIntegerFourBytes unsignedIntegerFourBytes, String str, UnsignedIntegerTwoBytes unsignedIntegerTwoBytes, UnsignedIntegerTwoBytes unsignedIntegerTwoBytes2, String str2, Protocol protocol, String str3) {
+        this.enabled = z6;
+        this.leaseDurationSeconds = unsignedIntegerFourBytes;
+        this.remoteHost = str;
+        this.externalPort = unsignedIntegerTwoBytes;
+        this.internalPort = unsignedIntegerTwoBytes2;
+        this.internalClient = str2;
+        this.protocol = protocol;
+        this.description = str3;
+    }
+}

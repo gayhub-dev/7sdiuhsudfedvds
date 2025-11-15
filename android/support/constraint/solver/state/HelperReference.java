@@ -1,0 +1,40 @@
+package android.support.constraint.solver.state;
+
+import android.support.constraint.solver.state.State;
+import android.support.constraint.solver.widgets.HelperWidget;
+import java.util.ArrayList;
+
+/* loaded from: classes.dex */
+public class HelperReference {
+    private HelperWidget mHelperWidget;
+    public ArrayList<Object> mReferences = new ArrayList<>();
+    public final State mState;
+    public final State.Helper mType;
+
+    public HelperReference(State state, State.Helper helper) {
+        this.mState = state;
+        this.mType = helper;
+    }
+
+    public HelperReference add(Object... objArr) {
+        for (Object obj : objArr) {
+            this.mReferences.add(obj);
+        }
+        return this;
+    }
+
+    public void apply() {
+    }
+
+    public HelperWidget getHelperWidget() {
+        return this.mHelperWidget;
+    }
+
+    public State.Helper getType() {
+        return this.mType;
+    }
+
+    public void setHelperWidget(HelperWidget helperWidget) {
+        this.mHelperWidget = helperWidget;
+    }
+}
